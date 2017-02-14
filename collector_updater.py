@@ -18,7 +18,7 @@ import datetime
 # status
 print "Updating Pace Posted Stops Collector..."
 
-# define Collector workspace
+# define local Collector workspace
 arcpy.env.workspace = "C:\Users\leexsh\AppData\Roaming\Esri\Desktop10.3\ArcCatalog\Connection to sde.sde\KATSGE.Collector_Posted_Stops"
 arcpy.env.overwriteOutput = True
 
@@ -131,7 +131,7 @@ def main():
 			
 			# loops through marked stops in layer
 			for obj in marked[layer]:
-				objDict = {"attributes":{"OBJECTID":int(obj), "INSTALLATION_ACTION":"None"}}			
+				objDict = {"attributes":{"OBJECTID":int(obj), "INSTALLATION_ACTION":"Completed"}}			
 				jsonRequest.append(objDict)
 				
 			# dump to JSON file
