@@ -19,17 +19,18 @@ import datetime
 print "Updating Pace Posted Stops Collector..."
 
 # define local Collector workspace
-arcpy.env.workspace = "C:\Users\leexsh\AppData\Roaming\Esri\Desktop10.3\ArcCatalog\Connection to sde.sde\KATSGE.Collector_Posted_Stops"
+arcpy.env.workspace = "C:\Users\leexsh\AppData\Roaming\Esri\Desktop10.3\ArcCatalog\Connection to sde.sde\KATSGE.Collector_Posted_Stops2"
 arcpy.env.overwriteOutput = True
 
 # define dump directory 
-dir = "N:/Posted Stops Project/Collector/updater/dump/sde/"
+dir = "J:/Posted Stop Program/Sign Installation/Collector/dump/sde/"
 
 def load_workbook(wkbkName, dir):
 	"""
 	Function for loading an Excel workbook.
-	Parameters: workbook name, directory
-	Output: first worksheet of workbook
+	:param str workbook name: name of wkbk
+	:param str dir: location of wkbk
+	:returns: first worksheet of workbook
 	"""
 	wkbk = xlrd.open_workbook(dir + wkbkName + ".xls")
 	wksht = wkbk.sheet_by_index(0)
@@ -43,7 +44,7 @@ def main():
 	c_time = current[11:13] + current[14:16]
 	
 	# prints log file
-	sys.stdout = open("N:/Posted Stops Project/Collector/updater/dump/log/" + c_date + "_" + c_time + ".txt", 'w')	
+	sys.stdout = open("J:/Posted Stop Program/Sign Installation/Collector/dump/log/" + c_date + "_" + c_time + ".txt", 'w')	
 	print "Collector update executed " + current + "."
 	
 	# list feature classes in workspace
@@ -53,29 +54,57 @@ def main():
 	for fClass in fClasses:
 		try:			
 			# download each feature class from SDE
-			arcpy.TableToExcel_conversion(Input_Table="Database Connections\\Connection to sde.sde\\KATSGE.Collector_Posted_Stops\\" + fClass, Output_Excel_File=dir + fClass + ".xls", Use_field_alias_as_column_header="NAME", Use_domain_and_subtype_description="CODE")	
+			arcpy.TableToExcel_conversion(Input_Table="Database Connections\\Connection to sde.sde\\KATSGE.Collector_Posted_Stops2\\" + fClass, Output_Excel_File=dir + fClass[:13] + ".xls", Use_field_alias_as_column_header="NAME", Use_domain_and_subtype_description="CODE")	
 			
-			# debug statement
+			# debug print statement
 			print "Download of " + fClass + " successful."
 			
 		except:
-			# debug statement
-			print "Download of " + fClass + " failed."
+			# debug print statement
+			print "Download of " + fClass + " failed."			
 
 	# initialize merge as empty table (list of lists)
 	merge = []
 
 	# loops through feature class exports
 	for filename in glob.iglob(dir + "*.xls"):
+	
 		# parses filename
 		file = filename[-17:-4]
+		
+		# prints file heading
+		print ""
+		print "Installation comments for " + file + ":"
 		
 		# loads workbook
 		wksht = load_workbook(file, dir)
 		
+		# loop through each stop/row 
 		for row_idx in range(1, wksht.nrows):
-			if len(wksht.cell_value(row_idx, 20).encode('utf-8')) > 3:
-				merge.append(wksht.row(row_idx))
+			val = wksht.cell_value(row_idx, 20).encode('utf-8')
+			stopNo = str(wksht.row(row_idx)[0])[7:]
+			
+			# if comments field does not contain q mark
+			if "?" not in val:
+			
+				# 'completed' keyword in comments field
+				if "completed" in val:
+					print "COMPLETE - comment for stop " + stopNo + ": " + val
+					merge.append(wksht.row(row_idx))
+					
+				# comments field is empty	
+				elif len(val) == 0:
+					pass
+					
+				# comments field is non-empty and non-complete
+				else:
+					print "INCOMPLETE - comment for stop " + stopNo + ": " + val
+					pass
+			
+			# if comments field does contain q mark
+			else:
+				print "INCOMPLETE - comment for stop " + stopNo + ": " + val
+				pass
 			# if wksht.cell_value(row_idx, 20).encode('utf-8') != "":	
 				# if wksht.cell_value(row_idx, 20).encode('utf-8') != " ":
 					# merge.append(wksht.row(row_idx))
@@ -83,7 +112,7 @@ def main():
 	# initialize set of unique stops
 	uniqueStops = set([])
 
-	# loops through each table in merge
+	# loops through each row in merge
 	for row in merge:
 		uniqueStops.add(row[3].value)
 
@@ -91,7 +120,7 @@ def main():
 	marked = {}
 
 	# read json file of Collector feature server
-	featServerLink = 'http://maps.pacebus.com/arcgis/rest/services/Posted_Stops/Collector_PS_SDE/FeatureServer?f=pjson'
+	featServerLink = 'http://maps.pacebus.com/arcgis/rest/services/Posted_Stops/Collector_PS_SDE2/FeatureServer?f=pjson'
 	data = urllib2.urlopen(featServerLink)
 	string = data.read().decode('utf-8')
 	json_obj = json.loads(string)
@@ -124,6 +153,7 @@ def main():
 		
 		# if layer contains marked stops
 		if marked[layer] != {}:
+			print ""
 			print "Marked stops in layer " + str(layer) + " flagged for update: " + str(marked[layer])
 					
 			# initialize json request list
@@ -135,12 +165,12 @@ def main():
 				jsonRequest.append(objDict)
 				
 			# dump to JSON file
-			with open("N:/Posted Stops Project/Collector/updater/dump/json/layer_" + str(layer) + ".json", 'w') as applyEditsJSON:
+			with open("J:/Posted Stop Program/Sign Installation/Collector/dump/json/layer_" + str(layer) + ".json", 'w') as applyEditsJSON:
 				json.dump(jsonRequest, applyEditsJSON)
 				
 			# encodes and sends JSON request via REST	
 			submitData = {'features': jsonRequest, 'f': 'json', 'rollbackOnFailure': True}
-			jsonLink = 'http://maps.pacebus.com/arcgis/rest/services/Posted_Stops/Collector_PS_SDE/FeatureServer/' + str(layer) + '/updateFeatures'
+			jsonLink = 'http://maps.pacebus.com/arcgis/rest/services/Posted_Stops/Collector_PS_SDE2/FeatureServer/' + str(layer) + '/updateFeatures'
 			jsonData = urllib.urlencode(submitData)
 			response = urllib.urlopen(jsonLink, jsonData)
 			
