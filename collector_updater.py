@@ -88,7 +88,7 @@ def main():
 			if "?" not in val:
 			
 				# 'completed' keyword in comments field
-				if "completed" in val:
+				if "completed" in val or "Completed" in val:
 					print "COMPLETE - comment for stop " + stopNo + ": " + val
 					merge.append(wksht.row(row_idx))
 					
