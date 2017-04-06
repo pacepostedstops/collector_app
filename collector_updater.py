@@ -36,6 +36,17 @@ def load_workbook(wkbkName, dir):
 	wksht = wkbk.sheet_by_index(0)
 	return wksht
 
+def json_read(link):
+	"""
+	Function to create python dict from json link.
+	:param str link: link of JSON file
+	:return: dict object
+	"""
+	data = urllib2.urlopen(link)
+	string = data.read().decode('utf-8')
+	json_obj = json.loads(string)
+	return json_obj
+	
 def main():
 
 	# gets current date/time
@@ -121,9 +132,7 @@ def main():
 
 	# read json file of Collector feature server
 	featServerLink = 'http://maps.pacebus.com/arcgis/rest/services/Posted_Stops/Collector_PS_SDE2/FeatureServer?f=pjson'
-	data = urllib2.urlopen(featServerLink)
-	string = data.read().decode('utf-8')
-	json_obj = json.loads(string)
+	json_obj = json_read(featServerLink)
 
 	# get layer
 	layers = json_obj['layers']
