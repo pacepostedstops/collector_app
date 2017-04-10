@@ -81,7 +81,7 @@ def main():
 	for filename in glob.iglob(dir + "*.xls"):
 	
 		# parses filename
-		file = filename[-17:-4]
+		file = filename[filename.index("KATSGE"):filename.index(".xls")]
 		
 		# prints file heading
 		print ""
@@ -116,9 +116,6 @@ def main():
 			else:
 				print "INCOMPLETE - comment for stop " + stopNo + ": " + val
 				pass
-			# if wksht.cell_value(row_idx, 20).encode('utf-8') != "":	
-				# if wksht.cell_value(row_idx, 20).encode('utf-8') != " ":
-					# merge.append(wksht.row(row_idx))
 
 	# initialize set of unique stops
 	uniqueStops = set([])
